@@ -18,6 +18,6 @@
         </DockPanel>
         <TextBlock DockPanel.Dock="Top" TextAlignment="Center" FontWeight="Bold" FontSize="20" Background="Black" Foreground="Gray">Chat</TextBlock>
         <ProgressBar Height="10" DockPanel.Dock="Bottom" IsIndeterminate="True" Foreground="Black" Background="OrangeRed" BorderThickness="0"></ProgressBar>
-        <ListBox ItemsSource="{Binding}" Margin="2"></ListBox>
+        <ListBox ItemsSource="{Binding}" Margin="2" Background="Black" Foreground="OrangeRed" FontWeight="Bold" FontSize="15"></ListBox>
     </DockPanel>
 </Window>

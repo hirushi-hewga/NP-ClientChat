@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 
 namespace ServerApp
 {
@@ -44,7 +45,9 @@ namespace ServerApp
             while (true)
             {
                 byte[] data = server.Receive(ref clientEndPoint);
-                string message = Encoding.UTF8.GetString(data);
+                string jsonString = Encoding.UTF8.GetString(data);
+                var msgData = JsonSerializer.Deserialize<Tuple<string, string>>(jsonString);
+                string message = msgData.Item1;
                 Console.WriteLine($"{message} from {clientEndPoint}. Date : {DateTime.Now}");
 
                 switch (message)

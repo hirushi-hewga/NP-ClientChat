@@ -19,7 +19,7 @@ namespace ClientAppChat
         }
         public override string ToString()
         {
-            return $"{Username} : {Text}\t{Date.ToShortDateString()}";
+            return $"{Username} : {Text}\t\t{Date.ToString()}";
         }
     }
 }

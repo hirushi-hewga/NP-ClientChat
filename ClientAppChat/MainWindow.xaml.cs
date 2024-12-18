@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -34,7 +35,6 @@ namespace ClientAppChat
             string address = ConfigurationManager.AppSettings["ServerAddress"]!;
             short port = short.Parse(ConfigurationManager.AppSettings["ServerPort"]!);
             ServerEndPoint = new IPEndPoint(IPAddress.Parse(address), port);
-            Listen();
         }
 
         private void LeaveBtnClick(object sender, RoutedEventArgs e)
@@ -49,22 +49,30 @@ namespace ClientAppChat
         {
             string message = "$<join>";
             var input = new Input();
-            if (input.ShowDialog() == true)
+            bool? dialog = input.ShowDialog();
+            if (dialog != true || string.IsNullOrWhiteSpace(input.InputText))
             {
-                username = input.InputText;
-                SendMessage(message);
+                MessageBox.Show("Username is not valid");
+                return;
             }
+            username = input.InputText;
+            SendMessage(message);
+            Listen();
         }
 
         private void SendBtnClick(object sender, RoutedEventArgs e)
         {
             string message = msgText.Text;
-            SendMessage(message);
+            if (string.IsNullOrWhiteSpace(message))
+                MessageBox.Show("Message is not valid");
+            else SendMessage(message);
         }
 
         private async void SendMessage(string message)
         {
-            byte[] data = Encoding.UTF8.GetBytes(message);
+            var messageData = new Tuple<string,string>(message, username);
+            string jsonString = JsonSerializer.Serialize(messageData);
+            byte[] data = Encoding.UTF8.GetBytes(jsonString);
             await client.SendAsync(data, ServerEndPoint);
         }
 
@@ -73,8 +81,9 @@ namespace ClientAppChat
             while (true)
             {
                 var data = await client.ReceiveAsync();
-                string message = Encoding.UTF8.GetString(data.Buffer);
-                messages.Add(new MessageInfo(username, message, DateTime.Now));
+                string jsonString = Encoding.UTF8.GetString(data.Buffer);
+                var msgData = JsonSerializer.Deserialize<Tuple<string, string>>(jsonString);
+                messages.Add(new MessageInfo(msgData.Item2, msgData.Item1, DateTime.Now));
             }
         }
     }
