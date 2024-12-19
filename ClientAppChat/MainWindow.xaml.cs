@@ -22,42 +22,49 @@ namespace ClientAppChat
     public partial class MainWindow : Window
     {
         IPEndPoint ServerEndPoint;
+        NetworkStream ns = null;
         //const string serverAddress = "127.0.0.1";
         //const short serverPort = 4040;
-        UdpClient client;
+        TcpClient client;
         ObservableCollection<MessageInfo> messages = new ObservableCollection<MessageInfo>();
         private string username = null;
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = messages;
-            client = new UdpClient();
+            client = new TcpClient();
             string address = ConfigurationManager.AppSettings["ServerAddress"]!;
             short port = short.Parse(ConfigurationManager.AppSettings["ServerPort"]!);
             ServerEndPoint = new IPEndPoint(IPAddress.Parse(address), port);
         }
 
-        private void LeaveBtnClick(object sender, RoutedEventArgs e)
+        private void DisconnectBtnClick(object sender, RoutedEventArgs e)
         {
-            string message = "$<leave>";
-            SendMessage(message);
-            messages.Clear();
-            username = null;
+            //string message = "$<leave>";
+            //SendMessage(message);
+            //messages.Clear();
+            //username = null;
+
+            ns.Close();
+            client.Close();
         }
 
-        private void JoinBtnClick(object sender, RoutedEventArgs e)
+        private void ConnectBtnClick(object sender, RoutedEventArgs e)
         {
-            string message = "$<join>";
-            var input = new Input();
-            bool? dialog = input.ShowDialog();
-            if (dialog != true || string.IsNullOrWhiteSpace(input.InputText))
-            {
-                MessageBox.Show("Username is not valid");
-                return;
-            }
-            username = input.InputText;
-            SendMessage(message);
-            Listen();
+            //string message = "$<join>";
+            //var input = new Input();
+            //bool? dialog = input.ShowDialog();
+            //if (dialog != true || string.IsNullOrWhiteSpace(input.InputText))
+            //{
+            //    MessageBox.Show("Username is not valid");
+            //    return;
+            //}
+            //username = input.InputText;
+            //SendMessage(message);
+            //Listen();
+
+            client.Connect(ServerEndPoint);
+            ns = client.GetStream();
         }
 
         private void SendBtnClick(object sender, RoutedEventArgs e)
@@ -73,7 +80,10 @@ namespace ClientAppChat
             var messageData = new Tuple<string,string>(message, username);
             string jsonString = JsonSerializer.Serialize(messageData);
             byte[] data = Encoding.UTF8.GetBytes(jsonString);
-            await client.SendAsync(data, ServerEndPoint);
+            
+            client.Connect(ServerEndPoint);
+            NetworkStream ns = client.GetStream();
+            ns.Write(data);
         }
 
         private async void Listen()
