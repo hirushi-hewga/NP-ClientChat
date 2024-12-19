@@ -60,27 +60,23 @@ namespace ClientAppChat
         {
             try
             {
+                string message = "$<connect>";
+                var input = new Input();
+                bool? dialog = input.ShowDialog();
+                if (dialog != true || string.IsNullOrWhiteSpace(input.InputText))
+                    throw new Exception("Username is not valid");
+                username = input.InputText;
+                
                 client.Connect(ServerEndPoint);
                 ns = client.GetStream();
                 writer = new StreamWriter(ns);
                 reader = new StreamReader(ns);
                 Listen();
 
-                string message = "$<connect>";
-                var input = new Input();
-                bool? dialog = input.ShowDialog();
-                if (dialog != true || string.IsNullOrWhiteSpace(input.InputText))
-                {
-                    throw new Exception("Username is not valid");
-                }
-                username = input.InputText;
                 SendMessage(message);
             }
             catch (Exception ex)
             {
-                ns.Close();
-                client.Close();
-                username = null;
                 MessageBox.Show(ex.Message);
             }
         }
@@ -88,15 +84,12 @@ namespace ClientAppChat
         private void SendBtnClick(object sender, RoutedEventArgs e)
         {
             string message = msgText.Text;
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                MessageBox.Show("Message is not valid");
-                return;
-            }
+            if (username == null) { MessageBox.Show("You need to connect"); return; }
+            if (string.IsNullOrWhiteSpace(message)) { MessageBox.Show("Message is not valid"); return; }
             SendMessage(message);
         }
 
-        private async void SendMessage(string message)
+        private void SendMessage(string message)
         {
             var messageData = new Tuple<string, string>(message, username);
             string jsonString = JsonSerializer.Serialize(messageData);

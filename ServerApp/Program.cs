@@ -23,9 +23,24 @@ namespace ServerApp
         {
             listener = new TcpListener(new IPEndPoint(IPAddress.Parse(address), port));
         }
-        public void WriteText()
+        public void Disconnect(string username)
         {
-
+            usernames.Remove(username);
+            Console.WriteLine("Disconnected!!!!!!");
+        }
+        public void Connect(string username)
+        {
+            if (usernames.Count() >= 5)
+                throw new Exception("Chat is full.");
+            if (!usernames.Contains(username))
+                usernames.Add(username);
+            else throw new Exception("Username is exist.");
+            Console.WriteLine("Connected!!!!!!");
+        }
+        public void WriteText(string jsonString, StreamWriter writer)
+        {
+            writer.WriteLine(jsonString);
+            writer.Flush();
         }
         public void Start()
         {
@@ -46,19 +61,13 @@ namespace ServerApp
                 switch (message)
                 {
                     case CONNECT:
-                        if (usernames.Count() >= 5)
-                            throw new Exception("Chat is full.");
-                        if (!usernames.Contains(username))
-                            usernames.Add(username);
-                        else throw new Exception("Username is exist.");
-                        Console.WriteLine("Connected!!!!!!");
+                        Connect(username);
                         break;
                     case DISCONNECT:
-                        usernames.Remove(username);
+                        Disconnect(username);
                         break;
                     default:
-                        writer.WriteLine("Thanks!!!!");
-                        writer.Flush();
+                        WriteText(jsonMessage, writer);
                         break;
                 }
             }
