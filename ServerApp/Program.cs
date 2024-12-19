@@ -9,57 +9,56 @@ namespace ServerApp
     class ServerChat
     {
         const short port = 4040;
-        const string JOIN_CMD = "$<join>";
-        const string LEAVE_CMD = "$<leave>";
-        UdpClient server;
-        List<IPEndPoint> members;
+        const string address = "127.0.0.1";
+        const int client_max_count = 5;
+        const string DISCONNECT = "$<disconnect>";
+        const string CONNECT = "$<connect>";
+
+        List<string> usernames = new List<string>();
+
+        TcpListener listener = null;
+
         IPEndPoint clientEndPoint = null;
         public ServerChat()
         {
-            server = new UdpClient(port);
-            members = new List<IPEndPoint>();
+            listener = new TcpListener(new IPEndPoint(IPAddress.Parse(address), port));
         }
+        public void WriteText()
+        {
 
-        private void AddMember()
-        {
-            members.Add(clientEndPoint);
-            Console.WriteLine("Member was added!");
-        }
-        private void RemoveMember()
-        {
-            members.Remove(clientEndPoint);
-            Console.WriteLine("Member was removed!");
-        }
-        private void SendToAll(byte[] data)
-        {
-            if (members.Contains(clientEndPoint))
-            {
-                foreach (var member in members)
-                {
-                    server.SendAsync(data, data.Length, member);
-                }
-            }
         }
         public void Start()
         {
+            listener.Start();
+            Console.WriteLine("Waiting for connection.....");
+            TcpClient client = listener.AcceptTcpClient();
+            NetworkStream ns = client.GetStream();
+            StreamReader reader = new StreamReader(ns);
+            StreamWriter writer = new StreamWriter(ns);
             while (true)
             {
-                byte[] data = server.Receive(ref clientEndPoint);
-                string jsonString = Encoding.UTF8.GetString(data);
-                var msgData = JsonSerializer.Deserialize<Tuple<string, string>>(jsonString);
+                string jsonMessage = reader.ReadLine();
+                var msgData = JsonSerializer.Deserialize<Tuple<string, string>>(jsonMessage);
                 string message = msgData.Item1;
-                Console.WriteLine($"{message} from {clientEndPoint}. Date : {DateTime.Now}");
+                string username = msgData.Item2;
+                Console.WriteLine($"{message} from {client.Client.LocalEndPoint}. Date : {DateTime.Now}");
 
                 switch (message)
                 {
-                    case JOIN_CMD:
-                        AddMember();
+                    case CONNECT:
+                        if (usernames.Count() >= 5)
+                            throw new Exception("Chat is full.");
+                        if (!usernames.Contains(username))
+                            usernames.Add(username);
+                        else throw new Exception("Username is exist.");
+                        Console.WriteLine("Connected!!!!!!");
                         break;
-                    case LEAVE_CMD:
-                        RemoveMember();
+                    case DISCONNECT:
+                        usernames.Remove(username);
                         break;
                     default:
-                        SendToAll(data);
+                        writer.WriteLine("Thanks!!!!");
+                        writer.Flush();
                         break;
                 }
             }
