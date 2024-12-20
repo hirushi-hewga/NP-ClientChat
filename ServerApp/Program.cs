@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +14,11 @@ namespace ServerApp
         const int client_max_count = 5;
         const string DISCONNECT = "$<disconnect>";
         const string CONNECT = "$<connect>";
+
+        TcpClient client = null;
+        NetworkStream ns = null;
+        StreamReader reader = null;
+        StreamWriter writer = null;
 
         List<string> usernames = new List<string>();
 
@@ -57,7 +63,7 @@ namespace ServerApp
                 string message = msgData.Item1;
                 string username = msgData.Item2;
                 Console.WriteLine($"{message} from {client.Client.LocalEndPoint}. Date : {DateTime.Now}");
-
+        
                 switch (message)
                 {
                     case CONNECT:
